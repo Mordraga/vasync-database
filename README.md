@@ -44,6 +44,11 @@ This service resolves those headers into a `Role` and enforces "entities/
 researchers can only edit their own availability" itself, so that rule
 lives in exactly one place.
 
+`GET /settings` (reminder lead time, `/collab` match window) is readable
+by any trusted caller so the bot can pick up changes at runtime; `PUT
+/settings` requires the `staff` role (`app/api/deps.py::require_staff`) -
+this backs the dashboard's admin panel.
+
 ## Tests
 
 ```bash

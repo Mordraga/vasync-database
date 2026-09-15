@@ -47,6 +47,15 @@ async def replace_recurring(
     return [RecurringRuleOut.model_validate(rule) for rule in rules]
 
 
+@router.get("/overrides", response_model=list[OverrideOut])
+async def list_overrides(
+    discord_id: int, db: AsyncSession = Depends(get_db), caller: Caller = Depends(get_caller)
+) -> list[OverrideOut]:
+    user_id = await _resolve_user_id(db, discord_id, caller)
+    overrides = await availability_repository.list_overrides_for_user(db, user_id)
+    return [OverrideOut.model_validate(override) for override in overrides]
+
+
 @router.put("/overrides/{override_date}", response_model=OverrideOut)
 async def upsert_override(
     discord_id: int,

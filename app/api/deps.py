@@ -43,3 +43,9 @@ async def get_caller(
         raise HTTPException(status.HTTP_403_FORBIDDEN, str(exc)) from exc
 
     return Caller(discord_id=x_discord_user_id, role=role)
+
+
+async def require_staff(caller: Caller = Depends(get_caller)) -> Caller:
+    if caller.role is not Role.STAFF:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "staff role required")
+    return caller
