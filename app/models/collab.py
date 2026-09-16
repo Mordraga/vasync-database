@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -13,7 +13,10 @@ class ConfirmedCollab(Base):
     __tablename__ = "confirmed_collabs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    start_at_utc: Mapped[datetime]
+    # timezone=True: this column is compared against datetime.now(timezone.utc)
+    # in collab_repository.list_upcoming_unreminded - a naive column would
+    # raise "can't subtract offset-naive and offset-aware datetimes" at query time.
+    start_at_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     reminder_sent: Mapped[bool] = mapped_column(default=False)
 
     participants: Mapped[list["CollabParticipant"]] = relationship(
