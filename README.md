@@ -31,6 +31,10 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
+Production (Railway) runs `alembic upgrade head` as part of its start
+command (`railway.toml`) before `uvicorn` boots, so a new migration only
+needs a normal commit + push - no manual step against the prod DB.
+
 ## Auth model
 
 The bot and dashboard are the only two clients. Every request must carry:
