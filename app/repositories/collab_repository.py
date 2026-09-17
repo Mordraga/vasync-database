@@ -77,7 +77,7 @@ async def create_pending_collab(
 
     session.add(collab)
     await session.commit()
-    await session.refresh(collab)
+    await session.refresh(collab, attribute_names=["participants"])
     return collab
 
 
