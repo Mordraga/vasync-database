@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_service_token
-from app.repositories import user_repository
+from app.core.security import IdentityError, pick_role
+from app.repositories import roles_repository, user_repository
 from app.schemas.user import UserOut, UserUpsert
 
 router = APIRouter(prefix="/users", tags=["users"], dependencies=[Depends(require_service_token)])
@@ -13,10 +14,22 @@ async def upsert_user(discord_id: int, payload: UserUpsert, db: AsyncSession = D
     if payload.discord_id != discord_id:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "path/body discord_id mismatch")
 
+    configured_roles = await roles_repository.list_roles(db)
+    try:
+        role = pick_role(set(payload.role_ids), configured_roles)
+    except IdentityError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+
     user = await user_repository.upsert_user(
-        db, discord_id, payload.display_name, payload.timezone, payload.role
+        db, discord_id, payload.display_name, payload.timezone, role.name, role.is_staff
     )
-    return UserOut(discord_id=user.discord_id, display_name=user.display_name, timezone=user.timezone, role=user.cached_role)
+    return UserOut(
+        discord_id=user.discord_id,
+        display_name=user.display_name,
+        timezone=user.timezone,
+        role=user.cached_role,
+        is_staff=user.cached_is_staff,
+    )
 
 
 @router.get("/{discord_id}", response_model=UserOut)
@@ -25,4 +38,10 @@ async def get_user(discord_id: int, db: AsyncSession = Depends(get_db)) -> UserO
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "user not registered")
 
-    return UserOut(discord_id=user.discord_id, display_name=user.display_name, timezone=user.timezone, role=user.cached_role)
+    return UserOut(
+        discord_id=user.discord_id,
+        display_name=user.display_name,
+        timezone=user.timezone,
+        role=user.cached_role,
+        is_staff=user.cached_is_staff,
+    )

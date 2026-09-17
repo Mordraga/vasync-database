@@ -9,9 +9,6 @@ class Settings(BaseSettings):
     database_url: str
 
     vasync_guild_id: int
-    entity_role_id: int
-    researcher_role_id: int
-    staff_role_id: int
 
     service_token: str
 

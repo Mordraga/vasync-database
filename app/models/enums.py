@@ -20,12 +20,6 @@ class Recurrence(enum.StrEnum):
     BIWEEKLY = "biweekly"
 
 
-class Role(enum.StrEnum):
-    ENTITY = "entity"
-    RESEARCHER = "researcher"
-    STAFF = "staff"
-
-
 class CollabStatus(enum.StrEnum):
     PENDING = "pending"
     CONFIRMED = "confirmed"

@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
-from app.models.enums import Role
 
 
 class User(Base):
@@ -17,8 +16,10 @@ class User(Base):
     # to absolute Unix timestamps.
     timezone: Mapped[str] = mapped_column(String(64), default="UTC")
 
-    # Best-effort cache of the user's highest guild role, refreshed on each
-    # authenticated request. Authorization decisions still re-derive the
-    # role from live Discord role IDs (see app.core.security) rather than
-    # trusting this column, which exists for display/debugging only.
-    cached_role: Mapped[Role] = mapped_column(default=Role.ENTITY)
+    # Best-effort cache of the user's role name/staff bit, refreshed on each
+    # login. Authorization decisions still re-derive the role from live
+    # Discord role IDs against the server_roles table (see
+    # app.core.security) rather than trusting these columns, which exist
+    # for display/debugging only.
+    cached_role: Mapped[str] = mapped_column(String(64))
+    cached_is_staff: Mapped[bool] = mapped_column(default=False)

@@ -17,7 +17,7 @@ router = APIRouter(prefix="/users/{discord_id}/availability", tags=["availabilit
 
 
 async def _resolve_user_id(db: AsyncSession, discord_id: int, caller: Caller) -> int:
-    if not can_modify_user(caller.discord_id, caller.role, discord_id):
+    if not can_modify_user(caller.discord_id, caller.is_staff, discord_id):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "cannot modify another user's availability")
 
     user = await user_repository.get_by_discord_id(db, discord_id)

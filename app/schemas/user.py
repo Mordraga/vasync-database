@@ -1,19 +1,18 @@
 from pydantic import BaseModel
 
-from app.models.enums import Role
-
 
 class UserUpsert(BaseModel):
     discord_id: int
     display_name: str
     timezone: str = "UTC"
-    role: Role
+    role_ids: list[int]
 
 
 class UserOut(BaseModel):
     discord_id: int
     display_name: str
     timezone: str
-    role: Role
+    role: str
+    is_staff: bool
 
     model_config = {"from_attributes": True}

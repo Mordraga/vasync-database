@@ -19,8 +19,8 @@ product spec.
 - `app/services/availability_matcher.py` - multi-user intersection +
   timestamp resolution for `/collab`.
 - `app/api/routers` - FastAPI route handlers; thin, delegate to services.
-- `app/core/security.py` - Discord role -> internal Role, and the
-  "can this caller edit this user" rule.
+- `app/core/security.py` - Discord role ID -> configured VAsync role, and
+  the "can this caller edit this user" rule.
 
 ## Running locally
 
@@ -44,14 +44,24 @@ The bot and dashboard are the only two clients. Every request must carry:
   caller's already-verified Discord identity (the bot reads this off the
   interaction; the dashboard reads it off its own OAuth session).
 
-This service resolves those headers into a `Role` and enforces "entities/
-researchers can only edit their own availability" itself, so that rule
-lives in exactly one place.
+This service resolves those role IDs into a configured VAsync role and
+enforces "non-staff can only edit their own availability" itself, so that
+rule lives in exactly one place.
+
+Which Discord role IDs map to which VAsync role - and which of those are
+staff - is `server_roles` table data, not env vars or code:
+
+- `GET /roles` - list configured roles (any trusted caller).
+- `POST /roles` - add one: `{"name": "explorer", "discord_role_id": 123, "is_staff": false}` (staff-only).
+- `DELETE /roles/{id}` - remove one (staff-only).
+
+A new role in the Discord server just needs a POST here - no redeploy of
+this service, the bot, or the dashboard.
 
 `GET /settings` (reminder lead time, `/collab` match window) is readable
 by any trusted caller so the bot can pick up changes at runtime; `PUT
-/settings` requires the `staff` role (`app/api/deps.py::require_staff`) -
-this backs the dashboard's admin panel.
+/settings` requires a staff role (`app/api/deps.py::require_staff`) - this
+backs the dashboard's admin panel.
 
 ## Tests
 
