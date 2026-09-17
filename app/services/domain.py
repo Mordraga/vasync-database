@@ -10,7 +10,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import time
 
-from app.models.enums import Status
+from app.models.enums import CollabStatus, Status
 
 DAY_START = time.min
 DAY_END = time.max
@@ -96,3 +96,42 @@ def merge_adjacent(segments: list[TimeSegment]) -> list[TimeSegment]:
 def drop_excluded(segments: list[TimeSegment]) -> list[TimeSegment]:
     """Any-NO slots are not matches at all; keep only MAYBE/YES spans."""
     return [segment for segment in segments if segment.status is not Status.NO]
+
+
+@dataclass(frozen=True, slots=True)
+class CollabOutcome:
+    """The resolved result of a proposed collab once every invited
+    participant has responded (spec: mutual confirmation). Only ever
+    CONFIRMED or CANCELLED - PENDING is represented by resolve_collab_outcome
+    returning None instead of an instance of this class."""
+
+    status: CollabStatus
+    accepted_discord_ids: list[int]
+    declined_discord_ids: list[int]
+
+
+def resolve_collab_outcome(
+    participants: list[tuple[int, bool, bool | None]],
+) -> CollabOutcome | None:
+    """``participants`` is (discord_id, is_initiator, accepted) tuples.
+
+    Returns None while any non-initiator participant still hasn't responded
+    (accepted is None). Once everyone has responded: CONFIRMED if at least
+    one non-initiator accepted, CANCELLED if they all declined.
+    """
+    if any(not is_initiator and accepted is None for _, is_initiator, accepted in participants):
+        return None
+
+    accepted_ids = [discord_id for discord_id, _, accepted in participants if accepted]
+    declined_ids = [
+        discord_id for discord_id, is_initiator, accepted in participants if not is_initiator and not accepted
+    ]
+    status = CollabStatus.CONFIRMED if is_collab_still_viable(accepted_ids) else CollabStatus.CANCELLED
+    return CollabOutcome(status=status, accepted_discord_ids=accepted_ids, declined_discord_ids=declined_ids)
+
+
+def is_collab_still_viable(remaining_discord_ids: list[int]) -> bool:
+    """A collab needs at least two people left to be worth keeping - used
+    both when finalizing an initial proposal and when someone withdraws
+    from an already-confirmed collab via /cancel-collab."""
+    return len(remaining_discord_ids) >= 2
