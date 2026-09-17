@@ -25,15 +25,17 @@ product spec.
 ## Running locally
 
 ```bash
-cp .env.example .env   # fill in DATABASE_URL, guild/role IDs, SERVICE_TOKEN
+cp .env.example .env   # fill in DATABASE_URL, guild ID, SERVICE_TOKEN
 pip install -e ".[dev]"
 alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Production (Railway) runs `alembic upgrade head` as part of its start
-command (`railway.toml`) before `uvicorn` boots, so a new migration only
-needs a normal commit + push - no manual step against the prod DB.
+The app also runs `alembic upgrade head` itself in a FastAPI lifespan hook
+(`app/main.py`) before serving any requests, so a new migration ships on a
+normal commit + push with no manual step against the prod DB - this
+doesn't depend on however the process happens to be started (a Railway
+start-command chain turned out not to be reliably honored here).
 
 ## Auth model
 
