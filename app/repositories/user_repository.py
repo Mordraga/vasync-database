@@ -1,7 +1,12 @@
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
+
+# Who's eligible for live tracking: entities (the original ask) plus staff
+# (opened up 2026-09-20 after staff wanted to register too) - not
+# researchers/explorers/other future roles unless asked.
+_TRACKABLE_ROLES = or_(User.cached_role == "entity", User.cached_is_staff.is_(True))
 
 
 async def get_by_discord_id(session: AsyncSession, discord_id: int) -> User | None:
@@ -54,16 +59,14 @@ async def set_live_status(session: AsyncSession, discord_id: int, is_live: bool)
 
 
 async def list_twitch_linked_entities(session: AsyncSession) -> list[User]:
-    """Entities with a Twitch link registered - who vasync-bot's live
-    poller checks each cycle."""
+    """Trackable users (entities + staff) with a Twitch link registered -
+    who vasync-bot's live poller checks each cycle."""
     result = await session.execute(
-        select(User).where(User.cached_role == "entity", User.twitch_username.is_not(None))
+        select(User).where(_TRACKABLE_ROLES, User.twitch_username.is_not(None))
     )
     return list(result.scalars().all())
 
 
 async def list_live_entities(session: AsyncSession) -> list[User]:
-    result = await session.execute(
-        select(User).where(User.cached_role == "entity", User.is_live.is_(True))
-    )
+    result = await session.execute(select(User).where(_TRACKABLE_ROLES, User.is_live.is_(True)))
     return list(result.scalars().all())

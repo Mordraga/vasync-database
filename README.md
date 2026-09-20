@@ -76,9 +76,11 @@ for the polling side):
 - `PUT /users/{id}/live-status` - service-token only; vasync-bot's poller
   pushes state here, not a user action.
 - `GET /users/live` / `GET /users/twitch-linked` - read-only for any
-  trusted caller; only users with the `entity` role are ever included
-  (hardcoded literal match on `cached_role`, not a permission check - see
-  `app/repositories/user_repository.py`).
+  trusted caller; only entities and staff are ever included
+  (`_TRACKABLE_ROLES` in `app/repositories/user_repository.py` - a
+  hardcoded literal match on `cached_role == "entity"` plus
+  `cached_is_staff`, not a permission check, just who this particular
+  feature applies to).
 
 ## Tests
 
