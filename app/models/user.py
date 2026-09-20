@@ -23,3 +23,10 @@ class User(Base):
     # for display/debugging only.
     cached_role: Mapped[str] = mapped_column(String(64))
     cached_is_staff: Mapped[bool] = mapped_column(default=False)
+
+    # Self-registered via the dashboard; null until the user sets one.
+    twitch_username: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+    # Pushed by vasync-bot's live poller (entities with a twitch_username
+    # set only) - not something a caller sets directly.
+    is_live: Mapped[bool] = mapped_column(default=False)

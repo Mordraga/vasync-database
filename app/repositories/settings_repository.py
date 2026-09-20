@@ -18,6 +18,7 @@ async def update_settings(session: AsyncSession, update: BotSettingsUpdate) -> B
     settings = await get_settings(session)
     settings.reminder_lead_minutes = update.reminder_lead_minutes
     settings.match_window_days = update.match_window_days
+    settings.live_poll_interval_minutes = update.live_poll_interval_minutes
     await session.commit()
     await session.refresh(settings)
     return settings

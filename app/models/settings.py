@@ -15,3 +15,4 @@ class BotSettings(Base):
     id: Mapped[int] = mapped_column(primary_key=True, default=SETTINGS_SINGLETON_ID)
     reminder_lead_minutes: Mapped[int] = mapped_column(default=15)
     match_window_days: Mapped[int] = mapped_column(default=14)
+    live_poll_interval_minutes: Mapped[int] = mapped_column(default=5)
