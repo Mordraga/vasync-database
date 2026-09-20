@@ -60,10 +60,25 @@ staff - is `server_roles` table data, not env vars or code:
 A new role in the Discord server just needs a POST here - no redeploy of
 this service, the bot, or the dashboard.
 
-`GET /settings` (reminder lead time, `/collab` match window) is readable
-by any trusted caller so the bot can pick up changes at runtime; `PUT
-/settings` requires a staff role (`app/api/deps.py::require_staff`) - this
-backs the dashboard's admin panel.
+`GET /settings` (reminder lead time, `/collab` match window, live-status
+poll interval, live-announce channel) is readable by any trusted caller so
+the bot can pick up changes at runtime; `PUT /settings` requires a staff
+role (`app/api/deps.py::require_staff`) - this backs the dashboard's admin
+panel. `live_announce_channel_id` is serialized as a string, not a number
+- it's a Discord channel snowflake and JSON numbers lose precision past
+`Number.MAX_SAFE_INTEGER` in JS.
+
+Twitch link + live status (roadmap items 2/3, see `vasync-bot`'s README
+for the polling side):
+
+- `PUT /users/{id}/twitch` - self-or-staff, register/clear a Twitch
+  username.
+- `PUT /users/{id}/live-status` - service-token only; vasync-bot's poller
+  pushes state here, not a user action.
+- `GET /users/live` / `GET /users/twitch-linked` - read-only for any
+  trusted caller; only users with the `entity` role are ever included
+  (hardcoded literal match on `cached_role`, not a permission check - see
+  `app/repositories/user_repository.py`).
 
 ## Tests
 
